@@ -40,6 +40,7 @@ class SpaceInvadersLauncherFrame: public wxFrame
         void OnbtnupdateClick2(wxCommandEvent& event);
         void OnbtnchangelogClick(wxCommandEvent& event);
         void OnbtninfoClick(wxCommandEvent& event);
+        void OnbtnbugClick(wxCommandEvent& event);
         //*)
 
         //(*Identifiers(SpaceInvadersLauncherFrame)
@@ -49,10 +50,12 @@ class SpaceInvadersLauncherFrame: public wxFrame
         static const long ID_LISTBOX1;
         static const long ID_BUTTON3;
         static const long ID_BUTTON4;
+        static const long ID_BUTTON5;
         static const long ID_PANEL1;
         //*)
 
         //(*Declarations(SpaceInvadersLauncherFrame)
+        wxButton* btnbug;
         wxButton* btnchangelog;
         wxButton* btninfo;
         wxButton* btnplay;

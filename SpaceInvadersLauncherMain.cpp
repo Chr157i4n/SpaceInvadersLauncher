@@ -62,6 +62,7 @@ const long SpaceInvadersLauncherFrame::ID_GAUGE1 = wxNewId();
 const long SpaceInvadersLauncherFrame::ID_LISTBOX1 = wxNewId();
 const long SpaceInvadersLauncherFrame::ID_BUTTON3 = wxNewId();
 const long SpaceInvadersLauncherFrame::ID_BUTTON4 = wxNewId();
+const long SpaceInvadersLauncherFrame::ID_BUTTON5 = wxNewId();
 const long SpaceInvadersLauncherFrame::ID_PANEL1 = wxNewId();
 //*)
 
@@ -73,7 +74,7 @@ END_EVENT_TABLE()
 SpaceInvadersLauncherFrame::SpaceInvadersLauncherFrame(wxWindow* parent,wxWindowID id)
 {
     //(*Initialize(SpaceInvadersLauncherFrame)
-    Create(parent, id, _("SpaceInvadersLauncher"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE & ~(wxRESIZE_BORDER | wxMAXIMIZE_BOX), _T("id"));
+    Create(parent, id, _("SpaceInvadersLauncher"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE, _T("id"));
     SetClientSize(wxSize(420,260));
     {
     	wxIcon FrameIcon;
@@ -88,11 +89,13 @@ SpaceInvadersLauncherFrame::SpaceInvadersLauncherFrame(wxWindow* parent,wxWindow
     lbupdate = new wxListBox(Panel1, ID_LISTBOX1, wxPoint(10,10), wxSize(310,200), 0, 0, wxNO_BORDER, wxDefaultValidator, _T("ID_LISTBOX1"));
     btnchangelog = new wxButton(Panel1, ID_BUTTON3, _("ChangeLog"), wxPoint(330,10), wxSize(80,30), 0, wxDefaultValidator, _T("ID_BUTTON3"));
     btninfo = new wxButton(Panel1, ID_BUTTON4, _("Info"), wxPoint(330,50), wxSize(80,30), 0, wxDefaultValidator, _T("ID_BUTTON4"));
+    btnbug = new wxButton(Panel1, ID_BUTTON5, _("Bug report"), wxPoint(330,90), wxSize(80,30), 0, wxDefaultValidator, _T("ID_BUTTON5"));
 
     Connect(ID_BUTTON1,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&SpaceInvadersLauncherFrame::OnbtnupdateClick2);
     Connect(ID_BUTTON2,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&SpaceInvadersLauncherFrame::OnbtnplayClick2);
     Connect(ID_BUTTON3,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&SpaceInvadersLauncherFrame::OnbtnchangelogClick);
     Connect(ID_BUTTON4,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&SpaceInvadersLauncherFrame::OnbtninfoClick);
+    Connect(ID_BUTTON5,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&SpaceInvadersLauncherFrame::OnbtnbugClick);
     //*)
 }
 
@@ -124,6 +127,22 @@ wxTextFile updatelogTXT( wxT("log.txt") );
 updatelogTXT.Create("log.txt");             ///erstellt nur, falls nicht vorhanden
 updatelogTXT.Open("log.txt");
 
+        double value;
+        wxTextFile versionInfoTXT( wxT("version.txt") );
+        versionInfoTXT.Create("version.txt");
+        versionInfoTXT.Open();
+        wxString tmp=versionInfoTXT.GetFirstLine();
+        if(!tmp.ToDouble(&value)){ /* error! */ }
+            if (value>0)
+            {
+            value=value/10;
+            tmp = wxString::Format(wxT("%.1lf"), value);
+             versionInfoTXT.Close();
+
+        updatelogTXT.AddLine( "Updating from Version: " +  tmp);
+            } else
+            {
+             updatelogTXT.AddLine( "Clean Install"  );       }
 
 
 
@@ -270,8 +289,16 @@ lbupdate->Clear();
         Update();
     }
 
-     updatelogTXT.AddLine("");
-     updatelogTXT.AddLine("");
+
+         versionInfoTXT.Open();
+        tmp=versionInfoTXT.GetFirstLine();
+        if(!tmp.ToDouble(&value)){ /* error! */ }
+            value=value/10;
+            tmp = wxString::Format(wxT("%.1lf"), value);
+
+        updatelogTXT.AddLine( "Updated to Version: " +  tmp);
+         versionInfoTXT.Close();
+
 
 
     updatelogTXT.Write();
@@ -410,4 +437,67 @@ void SpaceInvadersLauncherFrame::OnbtninfoClick(wxCommandEvent& event)
 
         versionInfoTXT.Close();
 
+}
+
+void SpaceInvadersLauncherFrame::OnbtnbugClick(wxCommandEvent& event)
+{
+    wxTextFile logTXT("log.txt");
+    lbupdate->Clear();
+    bool bugtextwritten=false;
+
+     wxTextEntryDialog *dlg = new wxTextEntryDialog((wxFrame *)NULL,wxT("Schreibe hier deinen Spielfehler rein:"),wxT("Bugreport"),wxT(""));
+             if ( dlg->ShowModal() == wxID_OK )
+                {
+                wxString bugtext=dlg->GetValue();
+                bugtextwritten=true;
+                logTXT.Create("log.txt");             ///erstellt nur, falls nicht vorhanden
+                logTXT.Open("log.txt");
+                logTXT.InsertLine(bugtext,0);
+                logTXT.InsertLine("",1);
+                logTXT.InsertLine("",1);
+                logTXT.InsertLine("Log:",3);
+                logTXT.Write();
+                logTXT.Close();
+
+
+
+
+   sf::Ftp ftp;
+    response = ftp.connect("staacraft.square7.ch", 21, sf::seconds(2));
+    response = ftp.login("staacraft_SpaceInvaders", "1324");
+    ftp.changeDirectory("Log");
+    response = ftp.getDirectoryListing();
+
+
+
+
+
+ int i;
+     sf::Ftp::ListingResponse response = ftp.getDirectoryListing();
+     const std::vector<std::string>& listing = response.getListing();
+      for (std::vector<std::string>::const_iterator it = listing.begin(); it != listing.end(); ++it)
+        i++;
+        wxString tmp="bugreport";
+        tmp << i-1;
+        tmp+=".txt";
+
+
+            rename( "log.txt" , tmp );
+            ftp.upload(std::string(tmp.mb_str()), "", sf::Ftp::Ascii);
+            rename( tmp,"log.txt" );
+
+            lbupdate->Append("Bug reported");
+
+
+
+                    logTXT.Create("log.txt");             ///erstellt nur, falls nicht vorhanden
+                logTXT.Open("log.txt");
+                    logTXT.RemoveLine(0);
+                    logTXT.RemoveLine(0);
+                    logTXT.RemoveLine(0);
+                    logTXT.RemoveLine(0);
+                logTXT.Write();
+                logTXT.Close();
+ }
+                dlg->Destroy();
 }
